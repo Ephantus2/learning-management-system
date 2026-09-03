@@ -14,3 +14,5 @@ class User(AbstractUser):
         choices=Role.choices,
         default=Role.STUDENT
     )
+    
+    login_id = models.CharField(max_length=100, unique=True)
