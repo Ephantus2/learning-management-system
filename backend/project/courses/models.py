@@ -43,3 +43,28 @@ class Enrollment(models.Model):
                 name="unique_student_course"
             )
         ]
+        
+class CourseMaterial(models.Model):
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="materials"
+    )
+
+    lecturer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="uploaded_materials"
+    )
+
+    title = models.CharField(max_length=200)
+
+    file = models.FileField(
+        upload_to="course_materials/"
+    )
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]

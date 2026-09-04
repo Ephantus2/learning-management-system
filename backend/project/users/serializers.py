@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from django.conf import settings
+from .models import User
 import re
 
 class UserSerializer(serializers.ModelSerializer):
@@ -8,12 +9,12 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'confirm_password']
+        fields = ['login_id','first_name', 'last_name', 'email', 'password', 'confirm_password']
         
     
-    def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError('username already exists')
+    def validate_login_id(self, value):
+        if User.objects.filter(login_id=value).exists():
+            raise serializers.ValidationError('login id already exists')
         return value
     
     def validate_email(self, value):
@@ -42,7 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')
         
         user = User.objects.create_user(
-            username= validated_data['username'],
+            login_id= validated_data['login_id'],
             email= validated_data['email'],
             password= validated_data['password']
         )
