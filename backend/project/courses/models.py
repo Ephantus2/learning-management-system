@@ -1,15 +1,21 @@
 from django.db import models
 from django.conf import settings
+from academics.models import Programme
 
 
 class Course(models.Model):
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=200)
 
-    lecturer = models.ForeignKey(
+    lecturer = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
         null=True,
+        related_name="courses"
+    )
+    
+    programme = models.ForeignKey(
+        Programme,
+        on_delete=models.CASCADE,
         related_name="courses"
     )
 

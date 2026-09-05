@@ -2,6 +2,8 @@ from django.db import models
 
 # Create your models here.
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from academics.models import Programme, Department
+from django.conf import settings
 
 class UserManager(BaseUserManager):
 
@@ -53,3 +55,43 @@ class User(AbstractUser):
     USERNAME_FIELD = "login_id"
     REQUIRED_FIELDS = ["first_name", "last_name", "email"]
     objects = UserManager()
+    
+class StudentProfile(models.Model):
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="student_profile"
+    )
+
+    programme = models.ForeignKey(
+        Programme,
+        on_delete=models.PROTECT,
+        related_name="students"
+    )
+
+    current_year = models.PositiveIntegerField(
+        default=1
+    )
+
+    admission_year = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.user.login_id
+    
+class LecturerProfile(models.Model):
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="lecturer_profile"
+    )
+
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.PROTECT,
+        related_name="lecturers"
+    )
+
+    def __str__(self):
+        return self.user.login_id
