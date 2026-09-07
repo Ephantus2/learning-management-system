@@ -41,3 +41,67 @@ class courseAssessmentsView(APIView):
         assessments = Assessment.objects.filter(course__code=course_code)
         serializer = AssessmentSerializer(assessments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SubmissionCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsStudent]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        serializer = SubmissionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(student=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class updateDeleteSubmissionView(APIView):
+    permission_classes = [IsAuthenticated, IsStudent]
+
+    def put(self, request, pk):
+        submission = get_object_or_404(Submission, pk=pk)
+        serializer = SubmissionSerializer(submission, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        submission = get_object_or_404(Submission, pk=pk)
+        submission.delete()
+        return Response({"message": "Submission deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+class submissionsView(APIView):
+    permission_classes = [IsLecturerOrAdmin]
+
+    def get(self, request, pk):
+        submissions = Submission.objects.filter(assessment = Assessment.objects.get(pk=pk))
+        serializer = SubmissionSerializer(submissions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class GradeCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsLecturer]
+
+    def post(self, request):
+        serializer = GradeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GradeUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsLecturer]
+
+    def put(self, request, pk):
+        grade = get_object_or_404(Grade, pk=pk)
+        serializer = GradeSerializer(grade, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ViewGradeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        grade = get_object_or_404(Grade, submission=Submission.objects.get(pk=pk))
+        serializer = GradeSerializer(grade)
+        return Response(serializer.data, status=status.HTTP_200_OK)
