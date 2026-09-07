@@ -7,6 +7,7 @@ from .models import Enrollment, Course, CourseMaterial
 from django.db import IntegrityError
 from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
 from django.shortcuts import get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser  
 
 
 from .serializers import CourseMaterialSerializer, CourseSerializer
@@ -49,7 +50,7 @@ class CourseDetailView(APIView):
 
 
 class CourseMaterialCreateView(APIView):
-
+    parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated, IsLecturer]
 
     def post(self, request):
@@ -93,6 +94,14 @@ class UpdateDeleteCourseMaterialView(APIView):
         material = get_object_or_404(CourseMaterial, pk=pk)
         material.delete()
         return Response({"message": "Course material deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+class viewCourseMaterialsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_code):
+        materials = CourseMaterial.objects.filter(course__code=course_code)
+        serializer = CourseMaterialSerializer(materials, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class EnrollCourseView(APIView):
