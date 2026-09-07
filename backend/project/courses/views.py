@@ -1,28 +1,55 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
-from users.permissions import IsLecturerOrAdmin
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
+from .models import Enrollment, Course
+from django.db import IntegrityError
+from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
+from django.shortcuts import get_object_or_404
 
-from .serializers import CourseMaterialSerializer
-from users.permissions import IsLecturer
+
+from .serializers import CourseMaterialSerializer, CourseSerializer
+
 
 
 class CourseCreateView(APIView):
 
-    permission_classes = [IsLecturerOrAdmin]
+    permission_classes = [IsAdmin]
 
     def post(self, request):
+        serializer = CourseSerializer(data=request.data)
 
-        return Response({
-            "message": "Course created"
-        })
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-# views.py
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CourseDetailView(APIView):
+
+    permission_classes = [IsAdmin]
+    def get(self, request):
+        courses = Course.objects.filter(programme_iexact=request.data.get('programme'))
+        serializer = CourseSerializer(courses, many=True)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+
+        course = get_object_or_404(Course, pk=pk)
+        serializer = CourseSerializer(course, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+
+        course = get_object_or_404(Course, pk=pk)
+        course.delete()
+        return Response({"message": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class CourseMaterialCreateView(APIView):
@@ -50,15 +77,6 @@ class CourseMaterialCreateView(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
         
-
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.response import Response
-from .models import Enrollment
-from django.db import IntegrityError
-from users.permissions import IsStudent
-from .models import Course
-from django.shortcuts import get_object_or_404
 
 
 class EnrollCourseView(APIView):
