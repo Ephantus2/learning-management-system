@@ -123,3 +123,21 @@ class UnenrollCourseView(APIView):
         
         enrollment.delete()
         return Response({"message": f"{course_code} unenrolled"})
+
+class EnrolledUnits(APIView):
+    permission_classes = [IsStudent]
+
+    def get(self, request):
+        student = request.user
+        enrollments = Enrollment.objects.filter(student=student)
+        courses = [enrollment.course for enrollment in enrollments]
+        serializer = CourseSerializer(courses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class EnrolmentStatisticsView(APIView):
+    permission_classes = [IsLecturerOrAdmin]
+
+    def get(self, request, course_code):
+        course = get_object_or_404(Course, code=course_code)
+        total_enrollments = Enrollment.objects.filter(course=course).count()
+        return Response({"course": course.name, "total_enrollments": total_enrollments}, status=status.HTTP_200_OK)
