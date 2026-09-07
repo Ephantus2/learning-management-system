@@ -7,7 +7,7 @@ from .models import CourseMaterial, Course
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = [ "code", "name", "description", "lecturer", "programme", "created_at" ]
+        fields = ["id", "code", "name", "description", "lecturer", "programme", "created_at" ]
 
     def validate_code(self, value):
         if Course.objects.filter(code=value).exists():

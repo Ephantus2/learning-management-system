@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Enrollment, Course
+from .models import Enrollment, Course, CourseMaterial
 from django.db import IntegrityError
 from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
 from django.shortcuts import get_object_or_404
@@ -29,10 +29,6 @@ class CourseCreateView(APIView):
 class CourseDetailView(APIView):
 
     permission_classes = [IsAdmin]
-    def get(self, request):
-        courses = Course.objects.filter(programme_iexact=request.data.get('programme'))
-        serializer = CourseSerializer(courses, many=True)
-        return Response(serializer.data)
 
     def put(self, request, pk):
 
@@ -76,7 +72,27 @@ class CourseMaterialCreateView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-        
+class UpdateDeleteCourseMaterialView(APIView):
+    permission_classes = [IsAuthenticated, IsLecturer, IsAdmin]
+
+    def put(self, request, pk):
+        material = get_object_or_404(CourseMaterial, pk=pk)
+        serializer = CourseMaterialSerializer(
+            material,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        material = get_object_or_404(CourseMaterial, pk=pk)
+        material.delete()
+        return Response({"message": "Course material deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class EnrollCourseView(APIView):
