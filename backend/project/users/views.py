@@ -31,7 +31,7 @@ class LoginView(APIView):
         
         if user is not None:
             token = get_token_for_user(user)
-            response = Response({'message': 'logged in successfully', "user": user.id})
+            response = Response({'message': 'logged in successfully', "user": user.id, "role": user.role}, status=status.HTTP_200_OK)
             response.set_cookie(
                 key='access_token',
                 value=token['access'],
@@ -57,3 +57,36 @@ class LogoutView(APIView):
         response.delete_cookie('refresh_token')
         response.data = {'message': 'logged out'}
         return response
+
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if user.role == "STUDENT":
+            student_profile = user.student_profile
+            data = {
+                "id": user.id,
+                "login_id": user.login_id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "role": user.role,
+                "programme": student_profile.programme.name,
+                "current_year": student_profile.current_year,
+                "admission_year": student_profile.admission_year
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        elif user.role == "LECTURER":
+            lecturer_profile = user.lecturer_profile
+            data = {
+                "id": user.id,
+                "login_id": user.login_id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "role": user.role,
+                "department": lecturer_profile.department.name
+            }
+            return Response(data, status=status.HTTP_200_OK)

@@ -48,6 +48,15 @@ class CourseDetailView(APIView):
         course.delete()
         return Response({"message": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+class SearchCourseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get('query', '')
+        courses = Course.objects.filter(code__icontains=query)
+        serializer = CourseSerializer(courses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class CourseMaterialCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser]
@@ -74,7 +83,7 @@ class CourseMaterialCreateView(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 class UpdateDeleteCourseMaterialView(APIView):
-    permission_classes = [IsAuthenticated, IsLecturer, IsAdmin]
+    permission_classes = [IsAuthenticated, IsLecturerOrAdmin]
 
     def put(self, request, pk):
         material = get_object_or_404(CourseMaterial, pk=pk)
