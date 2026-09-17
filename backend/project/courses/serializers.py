@@ -1,8 +1,22 @@
 # serializers.py
 
 from rest_framework import serializers
-from .models import CourseMaterial
+from .models import CourseMaterial, Course
 
+
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id", "code", "name", "description", "lecturer", "programme", "created_at" ]
+
+    def validate_code(self, value):
+        if Course.objects.filter(code=value).exists():
+            raise serializers.ValidationError("Course with this code already exists.")
+        return value
+
+    def create(self, validated_data):
+        course = Course.objects.create(**validated_data)
+        return course
 
 class CourseMaterialSerializer(serializers.ModelSerializer):
 
