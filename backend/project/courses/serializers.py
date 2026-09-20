@@ -19,7 +19,10 @@ class CourseSerializer(serializers.ModelSerializer):
         return course
 
 class CourseMaterialSerializer(serializers.ModelSerializer):
-
+    course = serializers.SlugRelatedField(
+        slug_field="code",
+        queryset=Course.objects.all()
+    )
     class Meta:
         model = CourseMaterial
         fields = [

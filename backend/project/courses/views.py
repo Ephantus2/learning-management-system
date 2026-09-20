@@ -7,7 +7,7 @@ from .models import Enrollment, Course, CourseMaterial
 from django.db import IntegrityError
 from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
 from django.shortcuts import get_object_or_404
-from rest_framework.parsers import MultiPartParser, FormParser  
+from rest_framework.parsers import MultiPartParser, FormParser 
 
 
 from .serializers import CourseMaterialSerializer, CourseSerializer
