@@ -77,6 +77,14 @@ class submissionsView(APIView):
         serializer = SubmissionSerializer(submissions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class MySubmissionsView(APIView):
+    permission_classes = [IsStudent]
+
+    def get(self, request):
+        submissions = Submission.objects.filter(student=request.user)
+        serializer = SubmissionSerializer(submissions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class GradeCreateView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
 
@@ -105,3 +113,4 @@ class ViewGradeView(APIView):
         grade = get_object_or_404(Grade, submission=Submission.objects.get(pk=pk))
         serializer = GradeSerializer(grade)
         return Response(serializer.data, status=status.HTTP_200_OK)
+

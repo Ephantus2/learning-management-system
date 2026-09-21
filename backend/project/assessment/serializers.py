@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from .models import Assessment, Submission, Grade
-
+from courses.serializers import UserSerializer, CourseSerializer
 class AssessmentSerializer(serializers.ModelSerializer):
+
+    lecturer = UserSerializer(read_only=True)
+    course = CourseSerializer(read_only=True)
     class Meta:
         model = Assessment
         fields = [
@@ -22,6 +25,8 @@ class AssessmentSerializer(serializers.ModelSerializer):
         ]
 
 class SubmissionSerializer(serializers.ModelSerializer):
+    assessment = AssessmentSerializer(read_only=True)
+    student = UserSerializer(read_only=True)
     class Meta:
         model = Submission
         fields = [
