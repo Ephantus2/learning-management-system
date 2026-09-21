@@ -7,6 +7,8 @@ urlpatterns = [
     path('course/assessments/<str:course_code>/', views.courseAssessmentsView.as_view()),
     path('create/submission/', views.SubmissionCreateView.as_view()),
     path('update/submission/<int:pk>/', views.updateDeleteSubmissionView.as_view()),
+    path('create/grade/', views.GradeCreateView.as_view()),
+    path('update/grade/<int:pk>/', views.GradeUpdateView.as_view),
     path('view/grade/<int:pk>/', views.ViewGradeView.as_view()),
     path('submissions/<int:pk>/',views.submissionsView.as_view()),
 ]
