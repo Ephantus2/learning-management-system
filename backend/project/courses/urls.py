@@ -12,4 +12,5 @@ urlpatterns = [
     path('enrolled/units/', views.EnrolledUnits.as_view()),
     path('course/statistics/<str:course_code>/', views.EnrolmentStatisticsView.as_view()),
     path('course/materials/<str:course_code>/', views.viewCourseMaterialsView.as_view()),
+    path('teaching/courses/', views.ViewTeachingCoursesView.as_view()),
 ]
