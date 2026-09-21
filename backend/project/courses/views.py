@@ -7,8 +7,8 @@ from .models import Enrollment, Course, CourseMaterial
 from django.db import IntegrityError
 from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
 from django.shortcuts import get_object_or_404
-from rest_framework.parsers import MultiPartParser, FormParser  
-
+from rest_framework.parsers import MultiPartParser, FormParser 
+from users.models import LecturerProfile
 
 from .serializers import CourseMaterialSerializer, CourseSerializer
 
@@ -127,6 +127,15 @@ class EnrollCourseView(APIView):
             return Response({"message": f"{course} enrolled successfully"}, status=status.HTTP_201_CREATED)
         except IntegrityError:
             return Response({"Error": "you are already enrolled in this course"}, status=status.HTTP_400_BAD_REQUEST)
+
+class ViewTeachingCoursesView(APIView):
+    permission_classes=[IsLecturer]
+    
+    def get(self, request):
+        lecturer = request.user
+        courses = Course.objects.filter(lecturer=get_object_or_404(LecturerProfile, user=lecturer))
+        serializer = CourseSerializer(courses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
         
 class UnenrollCourseView(APIView):
     permission_classes=[IsStudent]
