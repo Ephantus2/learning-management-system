@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.conf import settings
-from .models import User
+from .models import User, LecturerProfile, StudentProfile
 import re
 
 class UserSerializer(serializers.ModelSerializer):
@@ -49,3 +49,15 @@ class UserSerializer(serializers.ModelSerializer):
         )
         
         return user
+
+class StudentProfileSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentProfile
+        fields = "__all__"
+        read_only_fields = ['user']
+
+class LecturerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LecturerProfile
+        fields = "__all__"
+        read_only_fields = ['user']

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import UserSerializer
+from .serializers import UserSerializer, StudentProfileSerilizer, LecturerProfileSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -90,3 +90,23 @@ class UserDetailView(APIView):
                 "department": lecturer_profile.department.name
             }
             return Response(data, status=status.HTTP_200_OK)
+
+class CreateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        if user.role == "STUDENT":
+            serializer = StudentProfileSerilizer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif user.role == "LECTURER":
+            serializer = LecturerProfileSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
