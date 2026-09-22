@@ -48,8 +48,10 @@ class SubmissionCreateView(APIView):
 
     def post(self, request):
         serializer = SubmissionSerializer(data=request.data)
+        assessment = get_object_or_404(Assessment, pk=request.data.get('assessment'))
+        print(request.data)
         if serializer.is_valid():
-            serializer.save(student=request.user)
+            serializer.save(student=request.user, assessment=assessment)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
