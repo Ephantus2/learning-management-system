@@ -51,7 +51,10 @@ class GradeSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "submission",
-            "marks",
+            "assignment_marks",
+            "cat_marks",
+            "exam_marks",
+            "total_marks",
             "feedback",
             "graded_at"
         ]

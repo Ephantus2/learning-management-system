@@ -69,11 +69,24 @@ class Grade(models.Model):
         on_delete=models.CASCADE,
         related_name="grade"
     ) 
-
-    marks = models.DecimalField(max_digits=6, decimal_places=2)
+    assignment_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    cat_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    exam_marks = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    total_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     feedback = models.TextField(blank=True)
 
     graded_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.submission.student.login_id} - {self.submission.assessment.title} - {self.marks}"  
+        return f"{self.submission.student.login_id} - {self.submission.assessment.title} - {self.total_marks}"
+
+    def calculate_total(self):
+        return (
+            self.assignment_marks
+            + self.cat_marks
+            + (self.exam_marks or 0)
+        )
+
+    def save(self, *args, **kwargs):
+        self.total_marks = self.calculate_total()
+        super().save(*args, **kwargs)  
