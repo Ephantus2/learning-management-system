@@ -1,6 +1,7 @@
 from django.db import models
 from courses.models import Course
 from django.conf import settings
+from academics.models import AcademicYear
 
 # Create your models here.
 class Assessment(models.Model):
@@ -89,4 +90,71 @@ class Grade(models.Model):
 
     def save(self, *args, **kwargs):
         self.total_marks = self.calculate_total()
-        super().save(*args, **kwargs)  
+        super().save(*args, **kwargs)
+
+class Performance(models.Model):
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="performances"
+    )
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="student_performances"
+    )
+
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.PROTECT,
+        related_name="performances"
+    )
+
+    marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2
+    )
+
+    class Grade(models.TextChoices):
+        A = "A", "A"
+        B = "B", "B"
+        C = "C", "C"
+        D = "D", "D"
+        F = "F", "F"
+
+    grade = models.CharField(
+        max_length=1,
+        choices=Grade.choices
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "student",
+                    "course",
+                    "academic_year"
+                ],
+                name="unique_student_course_academic_year"
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.student.login_id} - "
+            f"{self.course.code} - "
+            f"{self.academic_year.name}"
+        )
+    
+    
+    
