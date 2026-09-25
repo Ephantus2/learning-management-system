@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Assessment, Submission, Grade
+from .models import Assessment, Submission, Grade, Performance
 from django.shortcuts import get_object_or_404
 from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
-from .serializers import AssessmentSerializer, SubmissionSerializer, GradeSerializer
+from .serializers import AssessmentSerializer, SubmissionSerializer, GradeSerializer, PerformanceSerializer
 
 class AssessmentCreateView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
@@ -114,5 +114,13 @@ class ViewGradeView(APIView):
     def get(self, request, pk):
         grade = get_object_or_404(Grade, submission=Submission.objects.get(pk=pk))
         serializer = GradeSerializer(grade)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class PerfomanceView():
+    permission_classes = [IsAuthenticated, IsStudent]
+
+    def get(self, request):
+        performances = Performance.objects.filter(student=request.user, academic_year=request.data.get('academic_year'))
+        serializer = PerformanceSerializer(performances, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

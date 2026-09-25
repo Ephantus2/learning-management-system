@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from academics.models import Programme
 from users.models import LecturerProfile
+from academics.models import AcademicYear
 
 
 class Course(models.Model):
@@ -20,6 +21,13 @@ class Course(models.Model):
         on_delete=models.CASCADE,
         related_name="courses"
     )
+
+    academic_year = models.ForeignKey(
+    AcademicYear,
+    on_delete=models.PROTECT,
+    related_name="academic_year"
+    )
+    semester = models.PositiveIntegerField()
 
     description = models.TextField()
 

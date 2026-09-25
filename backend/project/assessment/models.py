@@ -8,6 +8,7 @@ class Assessment(models.Model):
     class AssessmentType(models.TextChoices):
         CAT = "CAT", "CAT"
         ASSIGNMENT = "ASSIGNMENT", "Assignment"
+        EXAM = "EXAM", "Exam"
 
     course = models.ForeignKey(
         Course,
@@ -70,27 +71,15 @@ class Grade(models.Model):
         on_delete=models.CASCADE,
         related_name="grade"
     ) 
-    assignment_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0)
-    cat_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0)
-    exam_marks = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    total_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    marks = models.DecimalField(max_digits=5, decimal_places=2)
     feedback = models.TextField(blank=True)
 
     graded_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.submission.student.login_id} - {self.submission.assessment.title} - {self.total_marks}"
+        return f"{self.submission.student.login_id} - {self.submission.assessment.title} - {self.marks}"
 
-    def calculate_total(self):
-        return (
-            self.assignment_marks
-            + self.cat_marks
-            + (self.exam_marks or 0)
-        )
 
-    def save(self, *args, **kwargs):
-        self.total_marks = self.calculate_total()
-        super().save(*args, **kwargs)
 
 class Performance(models.Model):
 
@@ -103,7 +92,7 @@ class Performance(models.Model):
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
-        related_name="student_performances"
+        related_name="performances"
     )
 
     academic_year = models.ForeignKey(
@@ -112,9 +101,10 @@ class Performance(models.Model):
         related_name="performances"
     )
 
-    marks = models.DecimalField(
-        max_digits=5,
-        decimal_places=2
+    total_marks = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=0
     )
 
     class Grade(models.TextChoices):
@@ -123,10 +113,12 @@ class Performance(models.Model):
         C = "C", "C"
         D = "D", "D"
         F = "F", "F"
+        I = "I", "Incomplete"
 
     grade = models.CharField(
         max_length=1,
-        choices=Grade.choices
+        choices=Grade.choices,
+        default=Grade.I
     )
 
     created_at = models.DateTimeField(
@@ -155,6 +147,3 @@ class Performance(models.Model):
             f"{self.course.code} - "
             f"{self.academic_year.name}"
         )
-    
-    
-    

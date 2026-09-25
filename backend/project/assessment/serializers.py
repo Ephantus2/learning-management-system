@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Assessment, Submission, Grade
 from courses.serializers import UserSerializer, CourseSerializer
+from .models import Performance
 class AssessmentSerializer(serializers.ModelSerializer):
 
     lecturer = UserSerializer(read_only=True)
@@ -51,14 +52,34 @@ class GradeSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "submission",
-            "assignment_marks",
-            "cat_marks",
-            "exam_marks",
-            "total_marks",
+            "marks",
             "feedback",
             "graded_at"
         ]
         read_only_fields = [
             "id",
             "graded_at"
+        ]
+
+class PerformanceSerializer(serializers.ModelSerializer):
+    student = UserSerializer(read_only=True)
+    course = CourseSerializer(read_only=True)
+    marks = GradeSerializer(read_only=True)
+    class Meta:
+        model = Performance
+        fields = [
+            "id",
+            "student",
+            "course",
+            "academic_year",
+            "marks",
+            "grade"
+        ]
+        read_only_fields = [
+            "id",
+            "student",
+            "course",
+            "academic_year",
+            "marks",
+            "grade"
         ]
