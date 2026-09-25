@@ -6,7 +6,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Assessment, Submission, Grade, Performance
 from django.shortcuts import get_object_or_404
 from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
-from .serializers import AssessmentSerializer, SubmissionSerializer, GradeSerializer, PerformanceSerializer
+from .serializers import AssessmentSerializer, SubmissionSerializer, GradeSerializer, StudentPerformanceSerializer
+from .services import calculate_student_performance
 
 class AssessmentCreateView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
@@ -88,25 +89,77 @@ class MySubmissionsView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class GradeCreateView(APIView):
-    permission_classes = [IsAuthenticated, IsLecturer]
+
+    permission_classes = [
+        IsAuthenticated,
+        IsLecturer
+    ]
 
     def post(self, request):
-        serializer = GradeSerializer(data=request.data)
+
+        serializer = GradeSerializer(
+            data=request.data
+        )
+
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            grade = serializer.save()
+
+            calculate_student_performance(
+                student=grade.submission.student,
+                course=grade.submission.assessment.course,
+                academic_year=grade.submission.assessment.academic_year
+            )
+
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 class GradeUpdateView(APIView):
-    permission_classes = [IsAuthenticated, IsLecturer]
+
+    permission_classes = [
+        IsAuthenticated,
+        IsLecturer
+    ]
 
     def put(self, request, pk):
-        grade = get_object_or_404(Grade, pk=pk)
-        serializer = GradeSerializer(grade, data=request.data, partial=True)
+
+        grade = get_object_or_404(
+            Grade,
+            pk=pk
+        )
+
+        serializer = GradeSerializer(
+            grade,
+            data=request.data,
+            partial=True
+        )
+
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            grade = serializer.save()
+
+            calculate_student_performance(
+                student=grade.submission.student,
+                course=grade.submission.assessment.course,
+                academic_year=grade.submission.assessment.academic_year
+            )
+
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 class ViewGradeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -116,11 +169,42 @@ class ViewGradeView(APIView):
         serializer = GradeSerializer(grade)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class PerfomanceView():
-    permission_classes = [IsAuthenticated, IsStudent]
+class PerformanceView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsStudent
+    ]
 
     def get(self, request):
-        performances = Performance.objects.filter(student=request.user, academic_year=request.data.get('academic_year'))
-        serializer = PerformanceSerializer(performances, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        academic_year = request.query_params.get(
+            "academic_year"
+        )
+
+        if not academic_year:
+            return Response(
+                {
+                    "error": "academic_year is required"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        performances = Performance.objects.filter(
+            student=request.user,
+            academic_year_id=academic_year
+        ).select_related(
+            "course",
+            "academic_year"
+        )
+
+        serializer = StudentPerformanceSerializer(
+            performances,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 

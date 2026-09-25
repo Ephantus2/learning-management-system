@@ -61,25 +61,34 @@ class GradeSerializer(serializers.ModelSerializer):
             "graded_at"
         ]
 
-class PerformanceSerializer(serializers.ModelSerializer):
-    student = UserSerializer(read_only=True)
-    course = CourseSerializer(read_only=True)
-    marks = GradeSerializer(read_only=True)
+class StudentPerformanceSerializer(
+    serializers.ModelSerializer
+):
+
+    course_code = serializers.CharField(
+        source="course.code",
+        read_only=True
+    )
+
+    course_name = serializers.CharField(
+        source="course.name",
+        read_only=True
+    )
+
+    academic_year = serializers.CharField(
+        source="academic_year.name",
+        read_only=True
+    )
+
     class Meta:
+
         model = Performance
+
         fields = [
             "id",
-            "student",
-            "course",
+            "course_code",
+            "course_name",
             "academic_year",
-            "marks",
-            "grade"
-        ]
-        read_only_fields = [
-            "id",
-            "student",
-            "course",
-            "academic_year",
-            "marks",
-            "grade"
+            "total_marks",
+            "grade",
         ]
