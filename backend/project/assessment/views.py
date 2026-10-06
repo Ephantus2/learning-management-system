@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from users.permissions import IsStudent, IsLecturer, IsAdmin, IsLecturerOrAdmin
 from .serializers import AssessmentSerializer, SubmissionSerializer, GradeSerializer, StudentPerformanceSerializer
 from .services import calculate_student_performance
-
+from academics.models import AcademicYear
 class AssessmentCreateView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
 
@@ -124,7 +124,6 @@ class GradeCreateView(APIView):
 class GradeUpdateView(APIView):
 
     permission_classes = [
-        IsAuthenticated,
         IsLecturer
     ]
 
@@ -148,7 +147,7 @@ class GradeUpdateView(APIView):
             calculate_student_performance(
                 student=grade.submission.student,
                 course=grade.submission.assessment.course,
-                academic_year=grade.submission.assessment.academic_year
+                academic_year=grade.submission.assessment.course.academic_year
             )
 
             return Response(
@@ -189,6 +188,7 @@ class PerformanceView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        academic_year = get_object_or_404(AcademicYear, name__icontains=academic_year)
 
         performances = Performance.objects.filter(
             student=request.user,
