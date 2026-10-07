@@ -37,3 +37,18 @@ class Programme(models.Model):
 
     def __str__(self):
         return self.name
+
+class AcademicYear(models.Model):
+
+    name = models.CharField(
+        max_length=9,
+        unique=True
+    )
+
+    start_year = models.PositiveIntegerField()
+    end_year = models.PositiveIntegerField()
+
+    is_current = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
