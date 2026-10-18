@@ -5,7 +5,7 @@ from .models import Performance
 class AssessmentSerializer(serializers.ModelSerializer):
 
     lecturer = UserSerializer(read_only=True)
-    course = CourseSerializer(read_only=True)
+    #course = CourseSerializer(read_only=True)
     class Meta:
         model = Assessment
         fields = [

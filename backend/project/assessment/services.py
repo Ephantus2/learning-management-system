@@ -12,7 +12,7 @@ def calculate_student_performance(
     grades = Grade.objects.filter(
         submission__student=student,
         submission__assessment__course=course,
-        submission__assessment__academic_year=academic_year
+        submission__assessment__course__academic_year=academic_year
     )
 
     total_marks = grades.aggregate(
