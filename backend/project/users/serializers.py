@@ -43,6 +43,8 @@ class UserSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')
         
         user = User.objects.create_user(
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
             login_id= validated_data['login_id'],
             email= validated_data['email'],
             password= validated_data['password']
