@@ -1,47 +1,46 @@
-from django.db.models import Sum
+from decimal import Decimal
 
 from .models import Grade, Performance
 
 
-def calculate_student_performance(
-    student,
-    course,
-    academic_year
-):
+def calculate_student_performance(student, course, academic_year):
 
+    # Get all grades belonging to this student,
+    # for this course and academic year.
     grades = Grade.objects.filter(
-        submission__student=student,
-        submission__assessment__course=course,
-        submission__assessment__course__academic_year=academic_year
+        student=student,
+        assessment__course=course,
+        assessment__academic_year=academic_year
     )
 
-    total_marks = grades.aggregate(
-        total=Sum("marks")
-    )["total"] or 0
+    # Calculate the sum of all marks obtained.
+    total_marks = sum(
+        (grade.marks for grade in grades),
+        Decimal("0.00")
+    )
 
+    # Determine the student's letter grade.
+    # IMPORTANT: Replace these example thresholds with
+    # your university's official grading policy.
     if total_marks >= 70:
-        grade = "A"
-
+        letter_grade = "A"
     elif total_marks >= 60:
-        grade = "B"
-
+        letter_grade = "B"
     elif total_marks >= 50:
-        grade = "C"
-
+        letter_grade = "C"
     elif total_marks >= 40:
-        grade = "D"
-
+        letter_grade = "D"
     else:
-        grade = "F"
+        letter_grade = "F"
 
+    # Create or update the student's performance record.
     performance, created = Performance.objects.update_or_create(
         student=student,
         course=course,
         academic_year=academic_year,
-
         defaults={
             "total_marks": total_marks,
-            "grade": grade
+            "grade": letter_grade
         }
     )
 

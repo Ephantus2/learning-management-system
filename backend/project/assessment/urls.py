@@ -13,4 +13,10 @@ urlpatterns = [
     path('view/grade/<int:pk>/', views.ViewGradeView.as_view()),
     path('submissions/<int:pk>/',views.submissionsView.as_view()),
     path('mysubmissions/', views.MySubmissionsView.as_view()),
+        path(
+        "assessments/<int:assessment_id>/marks/bulk/",
+        views.BulkGradeCreateView.as_view(),
+        name="bulk-grade-create"
+    ),
+
 ]
