@@ -17,12 +17,15 @@ class AssessmentSerializer(serializers.ModelSerializer):
             "assessment_type",
             "total_marks",
             "due_date",
-            "created_at"
+            "created_at",
+            "academic_year",
+            "assessment_mode"
         ]
         read_only_fields = [
             "id",
             "lecturer",
-            "created_at"
+            "created_at",
+            "academic_year"
         ]
 
 class SubmissionSerializer(serializers.ModelSerializer):
@@ -51,15 +54,47 @@ class GradeSerializer(serializers.ModelSerializer):
         model = Grade
         fields = [
             "id",
-            "submission",
+            "assessment",
+            "student",
             "marks",
             "feedback",
+            "graded_by",
             "graded_at"
         ]
         read_only_fields = [
             "id",
+            "graded_by",
             "graded_at"
         ]
+
+    def validate(self, attrs):
+        assessment = attrs.get(
+            "assessment",
+            getattr(self.instance, "assessment", None)
+        )
+
+        marks = attrs.get(
+            "marks",
+            getattr(self.instance, "marks", None)
+        )
+
+        if assessment is not None and marks is not None:
+            if marks < 0:
+                raise serializers.ValidationError(
+                    {
+                        "marks": "Marks cannot be negative"
+                    }
+                )
+            if marks > assessment.total_marks:
+                raise serializers.ValidationError(
+                    {
+                        "marks": (
+                            f"Marks cannot exceed"
+                            f"{assessment.total_marks}."
+                        )
+                    }
+                )
+        return attrs
 
 class StudentPerformanceSerializer(
     serializers.ModelSerializer

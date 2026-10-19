@@ -10,6 +10,10 @@ class Assessment(models.Model):
         ASSIGNMENT = "ASSIGNMENT", "Assignment"
         EXAM = "EXAM", "Exam"
 
+    class AssessmentMode(models.TextChoices):
+        ONLINE = "ONLINE", "Online"
+        PHYSICAL = "PHYSICAL", "Physical"
+
     course = models.ForeignKey(
         Course,
         on_delete = models.CASCADE,
@@ -22,11 +26,23 @@ class Assessment(models.Model):
         related_name="created_assassments"
     )
 
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.PROTECT,
+        related_name="created_assessments"
+    )
+
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     assessment_type = models.CharField(
         max_length=20,
         choices = AssessmentType.choices
+    )
+
+    assessment_mode = models.CharField(
+        max_length=20,
+        choices=AssessmentMode,
+        default=AssessmentMode.PHYSICAL
     )
 
     total_marks = models.PositiveIntegerField()
@@ -66,18 +82,42 @@ class Submission(models.Model):
         ]
 
 class Grade(models.Model):
-    submission = models.OneToOneField(
-        Submission,
+    assessment = models.ForeignKey(
+        Assessment,
         on_delete=models.CASCADE,
-        related_name="grade"
-    ) 
+        related_name="grades"
+    )
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="assessment_grades"
+    )
     marks = models.DecimalField(max_digits=5, decimal_places=2)
     feedback = models.TextField(blank=True)
 
+    graded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="grades_awarded"
+    )
+
     graded_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["assessment", "student"],
+                name="unique_grade_per_student_assessment"
+            )
+        ]
+
     def __str__(self):
-        return f"{self.submission.student.login_id} - {self.submission.assessment.title} - {self.marks}"
+        return (
+            f"{self.student.login_id} - "
+            f"{self.assessment.title} - "
+            f"{self.marks}"
+        )
 
 
 
