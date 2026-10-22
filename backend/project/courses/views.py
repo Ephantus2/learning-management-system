@@ -139,6 +139,7 @@ class EnrollCourseView(APIView):
         
         try:
             Enrollment.objects.create(student=student, course=course)
+            cache.delete("enrolled_units")
             return Response({"message": f"{course} enrolled successfully"}, status=status.HTTP_201_CREATED)
         except IntegrityError:
             return Response({"Error": "you are already enrolled in this course"}, status=status.HTTP_400_BAD_REQUEST)
@@ -164,6 +165,7 @@ class UnenrollCourseView(APIView):
         enrollment = get_object_or_404(Enrollment, student=student, course=course)
         
         enrollment.delete()
+        cache.delete("enrolled_units")
         return Response({"message": f"{course_code} unenrolled"})
 
 class EnrolledUnits(APIView):
@@ -171,10 +173,14 @@ class EnrolledUnits(APIView):
 
     def get(self, request):
         student = request.user
-        enrollments = Enrollment.objects.filter(student=student)
-        courses = [enrollment.course for enrollment in enrollments]
-        serializer = CourseSerializer(courses, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = cache.get("enrolled_units")
+        if data is None:
+            enrollments = Enrollment.objects.filter(student=student)
+            courses = [enrollment.course for enrollment in enrollments]
+            serializer = CourseSerializer(courses, many=True)
+            data = serializer.data
+            cache.set("enrolled_units", data, timeout=300)
+        return Response(data, status=status.HTTP_200_OK)
 
 class EnrolmentStatisticsView(APIView):
     permission_classes = [IsLecturerOrAdmin]
