@@ -12,6 +12,10 @@ from users.models import LecturerProfile
 
 from .serializers import CourseMaterialSerializer, CourseSerializer
 
+#cache import
+
+from django.core.cache import cache
+
 
 
 class CourseCreateView(APIView):
@@ -52,10 +56,21 @@ class SearchCourseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        query = request.query_params.get('query', '')
-        courses = Course.objects.filter(code__icontains=query)
-        serializer = CourseSerializer(courses, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = cache.get("courses")
+
+        if data:
+            print("im from cache", data)
+
+
+        if data is None:
+            query = request.query_params.get('query', '')
+            courses = Course.objects.filter(code__icontains=query)
+            serializer = CourseSerializer(courses, many=True)
+            data = serializer.data
+
+            cache.set("courses", data, timeout=300)
+
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class CourseMaterialCreateView(APIView):
