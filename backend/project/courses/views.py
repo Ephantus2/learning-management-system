@@ -149,9 +149,14 @@ class ViewTeachingCoursesView(APIView):
     
     def get(self, request):
         lecturer = request.user
-        courses = Course.objects.filter(lecturer=get_object_or_404(LecturerProfile, user=lecturer))
-        serializer = CourseSerializer(courses, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = cache.get("teaching_cources")
+
+        if data is None:
+            courses = Course.objects.filter(lecturer=get_object_or_404(LecturerProfile, user=lecturer))
+            serializer = CourseSerializer(courses, many=True)
+            data = serializer.data
+            cache.set("teaching_courses", data, timeout=300)
+        return Response(data, status=status.HTTP_200_OK)
         
 class UnenrollCourseView(APIView):
     permission_classes=[IsStudent]
