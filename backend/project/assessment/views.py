@@ -150,7 +150,7 @@ class GradeCreateView(APIView):
 
         if serializer.is_valid():
 
-            grade = serializer.save()
+            grade = serializer.save(graded_by=request.user)
 
             calculate_student_performance(
                 student=grade.student,
@@ -441,12 +441,16 @@ class BulkGradeCreateView(APIView):
 class ViewGradeView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, pk):
+    def get(self, request, assessment_id, student_id):
         grade = get_object_or_404(Grade.objects.select_related(
             "student",
             "assessment",
-            "assessmnet__course"
-        ), pk=pk)
+            "assessment__course",
+            "assessment__academic_year"
+        ), 
+        assessment_id=assessment_id,
+        student_id=student_id
+        )
 
         serializer = GradeSerializer(grade)
         return Response(serializer.data, status=status.HTTP_200_OK)
