@@ -6,6 +6,8 @@ from .serializers import UserSerializer, StudentProfileSerilizer, LecturerProfil
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.core.cache import cache
+
 class RegisterView(APIView):
     def post(self, request):
         serializedData = UserSerializer(data = request.data)
@@ -65,30 +67,36 @@ class UserDetailView(APIView):
         user = request.user
 
         if user.role == "STUDENT":
-            student_profile = user.student_profile
-            data = {
-                "id": user.id,
-                "login_id": user.login_id,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "role": user.role,
-                "programme": student_profile.programme.name,
-                "current_year": student_profile.current_year,
-                "admission_year": student_profile.admission_year
-            }
+            data = cache.get("student_details")
+            if data is None:
+                student_profile = user.student_profile
+                data = {
+                    "id": user.id,
+                    "login_id": user.login_id,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "role": user.role,
+                    "programme": student_profile.programme.name,
+                    "current_year": student_profile.current_year,
+                    "admission_year": student_profile.admission_year
+                }
+                cache.set("student_details", data, timeout=300)
             return Response(data, status=status.HTTP_200_OK)
         elif user.role == "LECTURER":
-            lecturer_profile = user.lecturer_profile
-            data = {
-                "id": user.id,
-                "login_id": user.login_id,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "role": user.role,
-                "department": lecturer_profile.department.name
-            }
+            data = cache.get("lecturer_details")
+            if data is None:
+                lecturer_profile = user.lecturer_profile
+                data = {
+                    "id": user.id,
+                    "login_id": user.login_id,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "role": user.role,
+                    "department": lecturer_profile.department.name
+                }
+                cache.set("lecturer_details", data, timeout=300)
             return Response(data, status=status.HTTP_200_OK)
 
 class CreateProfileView(APIView):
