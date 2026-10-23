@@ -10,7 +10,7 @@ urlpatterns = [
     path('create/grade/', views.GradeCreateView.as_view()),
     path('update/grade/<int:pk>/', views.GradeUpdateView.as_view()),
     path("course/performance/", views.PerformanceView.as_view()),
-    path('view/grade/<int:pk>/', views.ViewGradeView.as_view()),
+    path('assessments/<int:assessment_id>/students/<int:student_id>/grade/', views.ViewGradeView.as_view()),
     path('submissions/<int:pk>/',views.submissionsView.as_view()),
     path('mysubmissions/', views.MySubmissionsView.as_view()),
         path(
