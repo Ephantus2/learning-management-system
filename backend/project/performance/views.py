@@ -17,7 +17,8 @@ class TranscriptDownloadView(APIView):
             raise PermissionDenied(
                 "Only students can download their transcripts."
             )
-        data = cache.get("transcript")
+        cache_key = f"transcript_{user.id}"
+        data = cache.get(cache_key)
 
         if data is None:
 
@@ -44,7 +45,7 @@ class TranscriptDownloadView(APIView):
 
             data = pdf_buffer
 
-            cache.set("transcript", data, timeout=300)
+            cache.set(cache_key, data, timeout=300)
 
         return FileResponse(
             data,

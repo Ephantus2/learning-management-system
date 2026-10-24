@@ -56,7 +56,8 @@ class SearchCourseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        data = cache.get("courses")
+        cache_key = f"courses_{request.user.id}"
+        data = cache.get(cache_key)
 
         if data:
             print("im from cache", data)
@@ -68,7 +69,7 @@ class SearchCourseView(APIView):
             serializer = CourseSerializer(courses, many=True)
             data = serializer.data
 
-            cache.set("courses", data, timeout=300)
+            cache.set(cache_key, data, timeout=300)
 
         return Response(data, status=status.HTTP_200_OK)
 
@@ -139,7 +140,7 @@ class EnrollCourseView(APIView):
         
         try:
             Enrollment.objects.create(student=student, course=course)
-            cache.delete("enrolled_units")
+            cache.delete(f"enrolled_units_{student.id}")
             return Response({"message": f"{course} enrolled successfully"}, status=status.HTTP_201_CREATED)
         except IntegrityError:
             return Response({"Error": "you are already enrolled in this course"}, status=status.HTTP_400_BAD_REQUEST)
@@ -149,13 +150,14 @@ class ViewTeachingCoursesView(APIView):
     
     def get(self, request):
         lecturer = request.user
-        data = cache.get("teaching_cources")
+        cache_key = f"teaching_courses_{lecturer.id}"
+        data = cache.get(cache_key)
 
         if data is None:
             courses = Course.objects.filter(lecturer=get_object_or_404(LecturerProfile, user=lecturer))
             serializer = CourseSerializer(courses, many=True)
             data = serializer.data
-            cache.set("teaching_courses", data, timeout=300)
+            cache.set(cache_key, data, timeout=300)
         return Response(data, status=status.HTTP_200_OK)
         
 class UnenrollCourseView(APIView):
@@ -170,7 +172,7 @@ class UnenrollCourseView(APIView):
         enrollment = get_object_or_404(Enrollment, student=student, course=course)
         
         enrollment.delete()
-        cache.delete("enrolled_units")
+        cache.delete(f"enrolled_units_{student.id}")
         return Response({"message": f"{course_code} unenrolled"})
 
 class EnrolledUnits(APIView):
@@ -178,13 +180,14 @@ class EnrolledUnits(APIView):
 
     def get(self, request):
         student = request.user
-        data = cache.get("enrolled_units")
+        cache_key = f"enrolled_units_{student.id}"
+        data = cache.get(cache_key)
         if data is None:
             enrollments = Enrollment.objects.filter(student=student)
             courses = [enrollment.course for enrollment in enrollments]
             serializer = CourseSerializer(courses, many=True)
             data = serializer.data
-            cache.set("enrolled_units", data, timeout=300)
+            cache.set(cache_key, data, timeout=300)
         return Response(data, status=status.HTTP_200_OK)
 
 class EnrolmentStatisticsView(APIView):

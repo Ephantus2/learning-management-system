@@ -102,7 +102,7 @@ class SubmissionCreateView(APIView):
         
         if serializer.is_valid():
             serializer.save(student=request.user, assessment=assessment)
-            cache.delete("my_submission")
+            cache.delete(f"my_submission_{request.user.id}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -114,14 +114,14 @@ class updateDeleteSubmissionView(APIView):
         serializer = SubmissionSerializer(submission, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            cache.delete("my_submission")
+            cache.delete(f"my_submission_{request.user.id}")
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         submission = get_object_or_404(Submission, pk=pk)
         submission.delete()
-        cache.delete("my_submission")
+        cache.delete(f"my_submission_{request.user.id}")
         return Response({"message": "Submission deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class submissionsView(APIView):
@@ -136,13 +136,14 @@ class MySubmissionsView(APIView):
     permission_classes = [IsStudent]
 
     def get(self, request):
+        cache_key = f"my_submission_{request.user.id}"
 
-        data =cache.get("my_submission")
+        data =cache.get(cache_key)
         if data is None:
             submissions = Submission.objects.filter(student=request.user)
             serializer = SubmissionSerializer(submissions, many=True)
             data = serializer.data
-            cache.set("my_submission", data, timeout=3000)
+            cache.set(cache_key, data, timeout=3000)
         return Response(data, status=status.HTTP_200_OK)
 
 class GradeCreateView(APIView):
