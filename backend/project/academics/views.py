@@ -8,6 +8,8 @@ from users.permissions import IsStudent
 from users.models import StudentProfile
 from django.shortcuts import get_object_or_404
 
+from django.core.cache import cache
+
 class DepartmentListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -20,9 +22,13 @@ class ProgrammeListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        programmes = Programme.objects.all()
-        serializer = ProgrammeSerializer(programmes, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = cache.get("programmes")
+        if data is None:
+            programmes = Programme.objects.all()
+            serializer = ProgrammeSerializer(programmes, many=True)
+            data = serializer.data
+            cache.set("programmes", data, timeout=300)
+        return Response(data, status=status.HTTP_200_OK)
 
 class AcademicYearView(APIView):
     permission_classes = [IsStudent]

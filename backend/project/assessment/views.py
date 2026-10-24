@@ -13,6 +13,8 @@ from courses.models import Enrollment
 from django.db import transaction
 from django.contrib.auth import get_user_model
 
+from django.core.cache import cache
+
 User = get_user_model()
 class AssessmentCreateView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
@@ -100,6 +102,7 @@ class SubmissionCreateView(APIView):
         
         if serializer.is_valid():
             serializer.save(student=request.user, assessment=assessment)
+            cache.delete("my_submission")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -111,12 +114,14 @@ class updateDeleteSubmissionView(APIView):
         serializer = SubmissionSerializer(submission, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            cache.delete("my_submission")
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         submission = get_object_or_404(Submission, pk=pk)
         submission.delete()
+        cache.delete("my_submission")
         return Response({"message": "Submission deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class submissionsView(APIView):
@@ -131,9 +136,14 @@ class MySubmissionsView(APIView):
     permission_classes = [IsStudent]
 
     def get(self, request):
-        submissions = Submission.objects.filter(student=request.user)
-        serializer = SubmissionSerializer(submissions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        data =cache.get("my_submission")
+        if data is None:
+            submissions = Submission.objects.filter(student=request.user)
+            serializer = SubmissionSerializer(submissions, many=True)
+            data = serializer.data
+            cache.set("my_submission", data, timeout=3000)
+        return Response(data, status=status.HTTP_200_OK)
 
 class GradeCreateView(APIView):
 
