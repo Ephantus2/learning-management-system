@@ -11,13 +11,50 @@ def calculate_student_performance(student, course, academic_year):
         student=student,
         assessment__course=course,
         assessment__academic_year=academic_year
-    )
+    ).select_related("assessment")
+
+    cat_scores = []
+    exam_scores = []
+
+    for grade in grades:
+        assessment = grade.assessment
+        maximum_marks = Decimal(assessment.total_marks)
+
+    marks_obtained = Decimal(grade.marks)
+
+    if assessment.assessment_type == "CAT":
+        converted_score = (
+            marks_obtained / maximum_marks
+        ) * Decimal("30")
+
+        cat_scores.append(converted_score)
+
+    elif assessment.assessment_type == "EXAM":
+        converted_score = (
+            marks_obtained / maximum_marks
+        ) * Decimal("70")
+
+        exam_scores.append(converted_score)
+
+    if cat_scores:
+        cat_contribution = sum(
+            cat_scores, Decimal("0.00")
+        ) / Decimal(len(cat_scores))
+
+    else:
+        cat_contribution = Decimal("0.00")
+
+    if exam_scores:
+        exam_contribution = sum(
+            exam_scores, Decimal("0.00")
+        )/ Decimal(len(exam_scores))
+
+    else:
+        exam_contribution = Decimal("0.00")
+
 
     # Calculate the sum of all marks obtained.
-    total_marks = sum(
-        (grade.marks for grade in grades),
-        Decimal("0.00")
-    )
+    total_marks = cat_contribution + exam_contribution
 
     # Determine the student's letter grade.
     # IMPORTANT: Replace these example thresholds with

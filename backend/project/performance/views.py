@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from assessment.models import Performance
 from .pdf_utils import generate_transcript_pdf
+from django.core.cache import cache
 
 class TranscriptDownloadView(APIView):
     permission_classes = [IsAuthenticated]
@@ -16,30 +17,37 @@ class TranscriptDownloadView(APIView):
             raise PermissionDenied(
                 "Only students can download their transcripts."
             )
+        data = cache.get("transcript")
 
-        performances = Performance.objects.filter(
-            student=user
-        ).select_related("course", "academic_year")
+        if data is None:
 
-        academic_year = request.query_params.get("academic_year")
+            performances = Performance.objects.filter(
+                student=user
+            ).select_related("course", "academic_year")
 
-        if academic_year:
-            performances = performances.filter(
-                academic_year__name=academic_year
+            academic_year = request.query_params.get("academic_year")
+
+            if academic_year:
+                performances = performances.filter(
+                    academic_year__name=academic_year
+                )
+
+            performances = performances.order_by(
+                "academic_year",
+                "course__code",
             )
 
-        performances = performances.order_by(
-            "academic_year",
-            "course__code",
-        )
+            pdf_buffer = generate_transcript_pdf(
+                student=user,
+                performances=performances
+            )
 
-        pdf_buffer = generate_transcript_pdf(
-            student=user,
-            performances=performances
-        )
+            data = pdf_buffer
+
+            cache.set("transcript", data, timeout=300)
 
         return FileResponse(
-            pdf_buffer,
+            data,
             as_attachment=True,
             filename="academic_transcript.pdf",
             content_type="application/pdf"
