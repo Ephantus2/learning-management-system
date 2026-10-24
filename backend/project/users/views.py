@@ -67,7 +67,8 @@ class UserDetailView(APIView):
         user = request.user
 
         if user.role == "STUDENT":
-            data = cache.get("student_details")
+            cache_key = f"student_details_{user.id}"
+            data = cache.get(cache_key)
             if data is None:
                 student_profile = user.student_profile
                 data = {
@@ -81,10 +82,11 @@ class UserDetailView(APIView):
                     "current_year": student_profile.current_year,
                     "admission_year": student_profile.admission_year
                 }
-                cache.set("student_details", data, timeout=300)
+                cache.set(cache_key, data, timeout=300)
             return Response(data, status=status.HTTP_200_OK)
         elif user.role == "LECTURER":
-            data = cache.get("lecturer_details")
+            cache_key = f"lecturer_details_{user.id}"
+            data = cache.get(cache_key)
             if data is None:
                 lecturer_profile = user.lecturer_profile
                 data = {
@@ -96,7 +98,7 @@ class UserDetailView(APIView):
                     "role": user.role,
                     "department": lecturer_profile.department.name
                 }
-                cache.set("lecturer_details", data, timeout=300)
+                cache.set(cache_key, data, timeout=300)
             return Response(data, status=status.HTTP_200_OK)
 
 class CreateProfileView(APIView):
