@@ -15,10 +15,15 @@ from django.contrib.auth import get_user_model
 
 from django.core.cache import cache
 
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
+
 User = get_user_model()
 class AssessmentCreateView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def post(self, request):
         academic_year = get_object_or_404(AcademicYear, is_current=True)
         serializer = AssessmentSerializer(data=request.data)
@@ -49,7 +54,7 @@ class AssessmentCreateView(APIView):
 
 class updateDeleteAssessmentView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
-
+    
     def put(self, request, pk):
         assessment = get_object_or_404(Assessment, pk=pk)
         serializer = AssessmentSerializer(assessment, data=request.data, partial=True)
