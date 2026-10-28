@@ -16,12 +16,17 @@ from .serializers import CourseMaterialSerializer, CourseSerializer
 
 from django.core.cache import cache
 
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
+
 
 
 class CourseCreateView(APIView):
 
     permission_classes = [IsAdmin]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def post(self, request):
         serializer = CourseSerializer(data=request.data)
 
@@ -34,7 +39,9 @@ class CourseCreateView(APIView):
 class CourseDetailView(APIView):
 
     permission_classes = [IsAdmin]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def put(self, request, pk):
 
         course = get_object_or_404(Course, pk=pk)
@@ -45,7 +52,9 @@ class CourseDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def delete(self, request, pk):
 
         course = get_object_or_404(Course, pk=pk)
@@ -54,7 +63,9 @@ class CourseDetailView(APIView):
 
 class SearchCourseView(APIView):
     permission_classes = [IsAuthenticated]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def get(self, request):
         cache_key = f"courses_{request.user.id}"
         data = cache.get(cache_key)
@@ -77,7 +88,9 @@ class SearchCourseView(APIView):
 class CourseMaterialCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated, IsLecturer]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def post(self, request):
 
         serializer = CourseMaterialSerializer(
@@ -100,7 +113,9 @@ class CourseMaterialCreateView(APIView):
         )
 class UpdateDeleteCourseMaterialView(APIView):
     permission_classes = [IsAuthenticated, IsLecturerOrAdmin]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def put(self, request, pk):
         material = get_object_or_404(CourseMaterial, pk=pk)
         serializer = CourseMaterialSerializer(
@@ -114,7 +129,9 @@ class UpdateDeleteCourseMaterialView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def delete(self, request, pk):
         material = get_object_or_404(CourseMaterial, pk=pk)
         material.delete()
@@ -122,7 +139,11 @@ class UpdateDeleteCourseMaterialView(APIView):
 
 class viewCourseMaterialsView(APIView):
     permission_classes = [IsAuthenticated]
-
+    @method_decorator(
+            ratelimit(
+                key='user', rate='25/m', block=True
+            )
+    )
     def get(self, request, course_code):
         materials = CourseMaterial.objects.filter(course__code=course_code)
         serializer = CourseMaterialSerializer(materials, many=True)
@@ -131,7 +152,9 @@ class viewCourseMaterialsView(APIView):
 
 class EnrollCourseView(APIView):
     permission_classes=[IsStudent]
-    
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def post(self, request):
         student = request.user
         course_code = request.data.get('course_code')
@@ -147,7 +170,9 @@ class EnrollCourseView(APIView):
 
 class ViewTeachingCoursesView(APIView):
     permission_classes=[IsLecturer]
-    
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def get(self, request):
         lecturer = request.user
         cache_key = f"teaching_courses_{lecturer.id}"
@@ -162,7 +187,9 @@ class ViewTeachingCoursesView(APIView):
         
 class UnenrollCourseView(APIView):
     permission_classes=[IsStudent]
-    
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def post(self, request):
         student = request.user
         course_code = request.data.get('course_code')
@@ -177,7 +204,9 @@ class UnenrollCourseView(APIView):
 
 class EnrolledUnits(APIView):
     permission_classes = [IsStudent]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def get(self, request):
         student = request.user
         cache_key = f"enrolled_units_{student.id}"
@@ -192,7 +221,9 @@ class EnrolledUnits(APIView):
 
 class EnrolmentStatisticsView(APIView):
     permission_classes = [IsLecturerOrAdmin]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def get(self, request, course_code):
         course = get_object_or_404(Course, code=course_code)
         total_enrollments = Enrollment.objects.filter(course=course).count()
