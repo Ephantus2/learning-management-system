@@ -1,4 +1,4 @@
-from django_ratelimit import Ratelimited
+from django_ratelimit.exceptions import Ratelimited
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,4 +12,4 @@ def custom_exception_handler(exc, context):
             status=status.HTTP_429_TOO_MANY_REQUESTS
         )
 
-    return exception_handler(exec, context)
+    return exception_handler(exc, context)
