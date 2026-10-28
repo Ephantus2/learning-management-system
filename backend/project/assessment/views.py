@@ -54,7 +54,9 @@ class AssessmentCreateView(APIView):
 
 class updateDeleteAssessmentView(APIView):
     permission_classes = [IsAuthenticated, IsLecturer]
-    
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def put(self, request, pk):
         assessment = get_object_or_404(Assessment, pk=pk)
         serializer = AssessmentSerializer(assessment, data=request.data, partial=True)
@@ -70,7 +72,9 @@ class updateDeleteAssessmentView(APIView):
 
 class courseAssessmentsView(APIView):
     permission_classes = [IsAuthenticated]
-
+    @method_decorator(
+            ratelimit(key='user', rate='30/m', block=True)
+    )
     def get(self, request, course_code):
         assessments = Assessment.objects.filter(course__code=course_code)
         serializer = AssessmentSerializer(assessments, many=True)
@@ -79,7 +83,9 @@ class courseAssessmentsView(APIView):
 class SubmissionCreateView(APIView):
     permission_classes = [IsAuthenticated, IsStudent]
     parser_classes = [MultiPartParser, FormParser]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def post(self, request):
         assessment_id = request.data.get("assessment")
         assessment = get_object_or_404(Assessment, pk=request.data.get('assessment'))
@@ -113,7 +119,9 @@ class SubmissionCreateView(APIView):
 
 class updateDeleteSubmissionView(APIView):
     permission_classes = [IsAuthenticated, IsStudent]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def put(self, request, pk):
         submission = get_object_or_404(Submission, pk=pk)
         serializer = SubmissionSerializer(submission, data=request.data, partial=True)
@@ -122,7 +130,9 @@ class updateDeleteSubmissionView(APIView):
             cache.delete(f"my_submission_{request.user.id}")
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def delete(self, request, pk):
         submission = get_object_or_404(Submission, pk=pk)
         submission.delete()
@@ -131,7 +141,9 @@ class updateDeleteSubmissionView(APIView):
 
 class submissionsView(APIView):
     permission_classes = [IsLecturerOrAdmin]
-
+    @method_decorator(
+            ratelimit(key='user', rate='30/m', block=True)
+    )
     def get(self, request, pk):
         submissions = Submission.objects.filter(assessment = Assessment.objects.get(pk=pk))
         serializer = SubmissionSerializer(submissions, many=True)
@@ -139,7 +151,9 @@ class submissionsView(APIView):
 
 class MySubmissionsView(APIView):
     permission_classes = [IsStudent]
-
+    @method_decorator(
+            ratelimit(key='user', rate='30/m', block=True)
+    )
     def get(self, request):
         cache_key = f"my_submission_{request.user.id}"
 
@@ -157,7 +171,9 @@ class GradeCreateView(APIView):
         IsAuthenticated,
         IsLecturer
     ]
-
+    @method_decorator(
+            ratelimit(key='user', rate='5/m', block=True)
+    )
     def post(self, request):
 
         serializer = GradeSerializer(
@@ -189,7 +205,9 @@ class GradeUpdateView(APIView):
     permission_classes = [
         IsLecturer
     ]
-
+    @method_decorator(
+            ratelimit(key='user', rate='5/m', block=True)
+    )
     def put(self, request, pk):
 
         grade = get_object_or_404(
@@ -263,7 +281,9 @@ class BulkGradeCreateView(APIView):
         IsAuthenticated,
         IsLecturer
     ]
-
+    @method_decorator(
+            ratelimit(key='user', rate='25/m', block=True)
+    )
     def post(self, request, assessment_id):
 
         # 1. Get the assessment.
@@ -456,7 +476,9 @@ class BulkGradeCreateView(APIView):
     
 class ViewGradeView(APIView):
     permission_classes = [IsAuthenticated]
-
+    @method_decorator(
+            ratelimit(key='user', rate='30/m', block=True)
+    )
     def get(self, request, assessment_id, student_id):
         grade = get_object_or_404(Grade.objects.select_related(
             "student",
@@ -477,7 +499,9 @@ class PerformanceView(APIView):
         IsAuthenticated,
         IsStudent
     ]
-
+    @method_decorator(
+            ratelimit(key='user', rate='30/m', block=True)
+    )
     def get(self, request):
 
         academic_year = request.query_params.get(
