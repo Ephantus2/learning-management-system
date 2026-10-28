@@ -63,6 +63,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'users.authentication.CookieJWTAuthentication',
     ),
+    "EXCEPTION_HANDLER": "users.exceptions.custom_exception_handler",
 }
 
 MIDDLEWARE = [
